@@ -1,7 +1,7 @@
 var human = -1;
 var computer = 1;
 
-// =========== heuristic eval of state =================================================
+// =========== return who won, human -1, puter 1 =================================================
 function eval(state) {
 	var score = 0;
 
@@ -20,7 +20,7 @@ function eval(state) {
 
 // ==== return if player won =============================================================
 function checkState(state, player) {
-	var winning_state = [
+	var winning_state = [ //all possible winning combinations
 		[state[0][0], state[0][1], state[0][2]],
 		[state[1][0], state[1][1], state[1][2]],
 		[state[2][0], state[2][1], state[2][2]],
@@ -30,14 +30,17 @@ function checkState(state, player) {
 		[state[0][0], state[1][1], state[2][2]],
 		[state[2][0], state[1][1], state[0][2]],
 	];
-
+	
+	//iterate through winning_state (winning combos)
 	for (var i = 0; i < 8; i++) {
 		var line = winning_state[i];
 		var filled = 0;
+		//loop through index in winning array, see if a hit was done
 		for (var j = 0; j < 3; j++) {
 			if (line[j] == player)
 				filled++;
 		}
+		//we have found 3 fufilling conditions in one of winning_state
 		if (filled == 3)
 			return true;
 	}
@@ -47,11 +50,11 @@ function checkState(state, player) {
 
 // return if human or AI won =============================================================
 function getWinner(state) {
-	return checkState(state, human) || checkState(state, computer);
+	return checkState(state, human) || checkState(state, computer); //return true 1 or false -1
 }
 // =======================================================================================
 
-// ==== return the coordinates of empty cells in a 3x3 grid =========================
+// ==== return the coordinates of empty cells in a 3x3 grid ==================
 function clearCells(state) {
 	var cells = [];
 	for (var x = 0; x < 3; x++) {
@@ -73,17 +76,11 @@ var board = [
 
 // == is cell empty, make a move (check if valid move or not) ==========================
 function validMove(x, y) {
-	var empties = clearCells(board);
 	try {
-		if (board[x][y] == 0) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	} catch (e) {
-		return false;
-	}
+        return board[x][y] === 0;
+    } catch (error) {
+        return false;
+    }
 }
 // ====================================================================================
 
@@ -99,28 +96,38 @@ function setMove(x, y, player) {
 }
 // ===================================================================================
 
-// ======================  official MINIMAX function ==================================
+// ======================  official MINIMAX function (how ai should move) ==================================
 function minimax(state, depth, player) {
-	var best;
-
+	var best; //best move to make for ai
+	
+	//intialize w extreme val
 	if (player == computer) {
 		best = [-1, -1, -1000];
 	}
 	else {
 		best = [-1, -1, +1000];
 	}
-
+	
+	//base case 
 	if (depth == 0 || getWinner(state)) {
 		var score = eval(state);
 		return [-1, -1, score];
 	}
-
+	
+	//iterate over possible moves returned by clearCells 
 	clearCells(state).forEach(function (cell) {
 		var x = cell[0];
 		var y = cell[1];
+
+		//simulate current move
 		state[x][y] = player;
+
+		//calc score of next move
 		var score = minimax(state, depth - 1, -player);
+		
+		//undoes move
 		state[x][y] = 0;
+		
 		score[0] = x;
 		score[1] = y;
 
@@ -138,16 +145,19 @@ function minimax(state, depth, player) {
 }
 // =======================================================================================
 
-// ================== ai calls minimax function ==========================================
+// ================== ai turn ==========================================
 function aiTurn() {
 	var x, y;
 	var move;
 	var cell;
 
+	//if board is empty, pick a rando spot to start
 	if (clearCells(board).length == 9) {
 		x = parseInt(Math.random() * 3);
 		y = parseInt(Math.random() * 3);
 	}
+	
+	//use minmax to find best move
 	else {
 		move = minimax(board, clearCells(board).length, computer);
 		x = move[0];
@@ -202,11 +212,12 @@ function clickedCell(cell) { // main calls this
 				aiTurn();
 		}
 	}
-	if (checkState(board, computer)) {
+	if (checkState(board, computer)) { //if computer won
 		var lines;
 		var cell;
 		var msg;
 
+		//find winning line
 		if (board[0][0] == 1 && board[0][1] == 1 && board[0][2] == 1)
 			lines = [[0, 0], [0, 1], [0, 2]];
 		else if (board[1][0] == 1 && board[1][1] == 1 && board[1][2] == 1)
@@ -224,13 +235,14 @@ function clickedCell(cell) { // main calls this
 		else if (board[2][0] == 1 && board[1][1] == 1 && board[0][2] == 1)
 			lines = [[2, 0], [1, 1], [0, 2]];
 
+		//change red it
 		for (var i = 0; i < lines.length; i++) {
 			cell = document.getElementById(String(lines[i][0]) + String(lines[i][1]));
 			cell.style.color = "red";
 		}
 
 		msg = document.getElementById("message");
-		msg.innerHTML = "You lose!";
+		msg.innerHTML = "You lose!"; //LOSER
 	}
 	if (clearCells(board).length == 0 && !getWinner(board)) {
 		var msg = document.getElementById("message");
